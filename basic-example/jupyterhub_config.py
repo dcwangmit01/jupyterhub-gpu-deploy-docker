@@ -3,6 +3,7 @@
 
 # Configuration file for JupyterHub
 import os
+import json
 
 c = get_config()  # noqa: F821
 
@@ -37,8 +38,10 @@ notebook_dir = os.environ.get("DOCKER_NOTEBOOK_DIR", "/home/jovyan/work")
 c.DockerSpawner.notebook_dir = notebook_dir
 
 # Mount the real user's Docker volume on the host to the notebook user's
-# notebook directory in the container
-c.DockerSpawner.volumes = {"jupyterhub-user-{username}": notebook_dir}
+#   home directory in the container.  Changed from the original notebook_dir
+#   because ~/.cache directories were not persisted.  This will persist
+#   everything under the home directory.
+c.DockerSpawner.volumes = {"jupyterhub-user-{username}": "/home/jovyan"}
 
 # Remove containers once they are stopped
 c.DockerSpawner.remove = True
@@ -54,13 +57,30 @@ c.JupyterHub.hub_port = 8080
 c.JupyterHub.cookie_secret_file = "/data/jupyterhub_cookie_secret"
 c.JupyterHub.db_url = "sqlite:////data/jupyterhub.sqlite"
 
+# DEFAULTS
 # Authenticate users with Native Authenticator
-c.JupyterHub.authenticator_class = "nativeauthenticator.NativeAuthenticator"
-
+# c.JupyterHub.authenticator_class = "nativeauthenticator.NativeAuthenticator"
 # Allow anyone to sign-up without approval
-c.NativeAuthenticator.open_signup = True
+# c.NativeAuthenticator.open_signup = False
 
 # Allowed admins
-admin = os.environ.get("JUPYTERHUB_ADMIN")
-if admin:
-    c.Authenticator.admin_users = [admin]
+# admin = "admin"
+# if admin:
+#     c.Authenticator.admin_users = [admin]
+
+#####################################################################
+# Nvidia
+##  sudo apt-get install nvidia-container-toolkit
+c.DockerSpawner.extra_host_config = {'runtime': 'nvidia'}
+
+#####################################################################
+# Google Oauth
+
+oauth_config = json.load(open('jupyterhub_oauth2_client_secret.json'))
+c.JupyterHub.authenticator_class = "google"
+c.OAuthenticator.oauth_callback_url = oauth_config['web']['redirect_uris'][0]
+c.OAuthenticator.client_id = oauth_config['web']['client_id']
+c.OAuthenticator.client_secret = oauth_config['web']['client_secret']
+c.OAuthenticator.admin_users = oauth_config['custom']['admin_users']
+c.OAuthenticator.allowed_users = oauth_config['custom']['allowed_users']
+c.OAuthenticator.allow_existing_users = False

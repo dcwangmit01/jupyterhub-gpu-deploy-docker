@@ -1,0 +1,13 @@
+# Tune the existing gpu-jupyter image to enable sudo for jovyan
+#   Also, add some utilities
+
+FROM cschranz/gpu-jupyter:v1.5_cuda-11.6_ubuntu-20.04
+
+USER root
+
+RUN echo 'jovyan ALL=(ALL:ALL) NOPASSWD:ALL' | sudo tee -a /etc/sudoers.d/jovyan && \
+    chmod 0440 /etc/sudoers.d/jovyan
+
+RUN apt-get update && apt-get install -y --no-install-recommends emacs-nox tmux yadm
+
+USER jovyan

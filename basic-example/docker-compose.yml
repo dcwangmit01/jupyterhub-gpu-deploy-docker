@@ -19,6 +19,8 @@ services:
     volumes:
       # The JupyterHub configuration file
       - "./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py:ro"
+      # The Google Oauth configuration file
+      - "./jupyterhub_oauth2_client_secret.json:/srv/jupyterhub/jupyterhub_oauth2_client_secret.json:ro"
       # Bind Docker socket on the host so we can connect to the daemon from
       # within the container
       - "/var/run/docker.sock:/var/run/docker.sock:rw"
@@ -32,7 +34,9 @@ services:
       # All containers will join this network
       DOCKER_NETWORK_NAME: jupyterhub-network
       # JupyterHub will spawn this Notebook image for users
-      DOCKER_NOTEBOOK_IMAGE: jupyter/base-notebook:latest
+      # DOCKER_NOTEBOOK_IMAGE: jupyter/base-notebook:latest
+      # DOCKER_NOTEBOOK_IMAGE: cschranz/gpu-jupyter:v1.5_cuda-11.6_ubuntu-20.04
+      DOCKER_NOTEBOOK_IMAGE: gpu-jupyter:custom
       # Notebook directory inside user image
       DOCKER_NOTEBOOK_DIR: /home/jovyan/work
       # Using this run command
